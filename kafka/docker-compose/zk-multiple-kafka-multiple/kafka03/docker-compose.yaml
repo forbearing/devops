@@ -22,7 +22,7 @@ services:
       ZOO_MAX_CLIENT_CNXNS: 120
       ZOO_MAX_SESSION_TIMEOUT: 40000
       ZOO_HEAP_SIZE: 2048
-      ZOO_ENABLE_PROMETHEUS_METRICS: false
+      ZOO_ENABLE_PROMETHEUS_METRICS: true
       ZOO_PROMETHEUS_METRICS_PORT_NUMBER: 7000
       ZOO_ENABLE_ADMIN_SERVER: true
       ZOO_ADMIN_SERVER_PORT_NUMBER: 8080
@@ -37,6 +37,7 @@ services:
       - ./zookeeper:/bitnami/zookeeper
     restart: always
     container_name: zookeeper
+    network_mode: host
   kafka:
     image: 'bitnami/kafka:2.8.1'
     ports:
@@ -50,7 +51,10 @@ services:
       KAFKA_CFG_LOG_RETENTION_HOURS: 168
       KAFKA_CFG_MAX_PARTITION_FETCH_BYTES: 1048576
       KAFKA_CFG_MAX_REQUEST_SIZE: 1048576
-      KAFKA_HEAP_OPTS: -Xmx4096m -Xms4096m
+      #KAFKA_HEAP_OPTS: "-Xmx4096m -Xms4096m"
+      #KAFKA_HEAP_OPTS: "-Xmx4096m -Xms4096m -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Dcom.sun.management.jmxremote.host=0.0.0.0 -Dcom.sun.management.jmxremote.local.only=false -Djava.rmi.server.hostname=[10.250.21.11]"
+      #KAFKA_HEAP_OPTS: "-Djava.rmi.server.hostname=$HOSTNAME -Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.authenticate=false  -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=9999"
+      KAFKA_HEAP_OPTS: "-Djava.rmi.server.hostname=10.250.21.13 -Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.authenticate=false  -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=9999"
       KAFKA_ENABLE_KRAFT: no
       JMX_PORT: 9999
       BITNAMI_DEBUG: true
@@ -58,6 +62,8 @@ services:
       ALLOW_PLAINTEXT_LISTENER: true
       KAFKA_CFG_LISTENERS: PLAINTEXT://:9092
       KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://10.250.21.13:9092
+      KAFKA_CFG_SASL_ENABLED_MECHANISMS: PLAIN
+      KAFKA_CFG_SASL_MECHANISM_INTER_BROKER_PROTOCOL: PLAINTEXT
 
       ## INTERNAL: used for inter-broker communications.
       ## CLIENT: used for communications with clients that are within the same network as Apache Kafka brokers.
@@ -80,3 +86,4 @@ services:
       - zookeeper
     restart: always
     container_name: kafka
+    network_mode: host
