@@ -1,0 +1,29 @@
+ci
+    github action
+    tekton
+
+cd
+    argocd
+    tekton
+
+
+
+解决方案
+    - circleci build source code from github and push image to dockerhub
+      argocd pull image from dockerhub and deploy app to k8s
+    - tekton clone and build source code from github and push image to dockerhub
+      tekton pull image from dockerhub and deploy app to k8s
+
+
+
+repository:
+    github
+    gitlab
+
+image repository
+    dockerhub
+    harbor
+
+
+clone, login docker, build, push
+pull/clone image, deploy

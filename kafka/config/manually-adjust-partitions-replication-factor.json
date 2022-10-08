@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "partitions": [
+    {"topic": "three", "partition": 0, "replicas": [0,1]},
+    {"topic": "three", "partition": 1, "replicas": [0,1]},
+    {"topic": "three", "partition": 2, "replicas": [1,0]},
+    {"topic": "three", "partition": 3, "replicas": [1,0]}
+  ]
+}

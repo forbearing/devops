@@ -1,0 +1,8 @@
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+
+10.250.21.11 kafka01
+10.250.21.12 kafka02
+10.250.21.13 kafka03
+10.250.21.14 kafka04
+10.250.21.15 kafka05

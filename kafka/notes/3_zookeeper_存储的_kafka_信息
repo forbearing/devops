@@ -1,0 +1,14 @@
+/kafka/admin/delete_topics
+/kafka/brokers/ids [0,1,2]          记录哪些服务器
+/kafka/brokers/topics/first/partitions/0/state
+    {"leader":1, "isr":[1,0,2]} 记录了谁是 Leader, 有哪些服务器可用
+/kafka/consumers
+    0.9 版本之前用于保存 offset 信息
+    0.9 版本之后 offset 存储在 kafka 主题中.
+/kafka/controller
+    {"brokerid": 0} 辅助选举 Leader
+/kafka/config
+/kafka/log_dir_event_notification
+/kafka/latest_producer_id_block
+/kafka/lsr_change_notification
+/kafka/Controller_epoch

@@ -1,0 +1,10 @@
+kafka-server-start.sh -damon /usr/local/kafka/config/server.properties
+    # 命令行启动 kafka
+kafka-server-stop.sh
+    # 命令行关闭 kafka
+
+jps
+    13930 Jps
+    13039 QuorumPeerMain
+    13759 Kafka
+

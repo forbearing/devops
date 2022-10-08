@@ -1,0 +1,12 @@
+version: '3.1'
+services:
+  eagle:
+    build:
+      context: .
+    environment:
+      #EFAK_CLUSTER_ZK_LIST: 10.250.21.11:2181/kafka
+      EFAK_CLUSTER_ZK_LIST: 10.250.21.11:2181,10.250.21.12:2181,10.250.21.13/kafka
+    ports:
+      - 8048:8048
+    restart: always
+    #network_mode: host

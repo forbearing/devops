@@ -1,0 +1,27 @@
+1:需要配置配置好主机名解析 否则 kafka-topics.sh --list 会失败
+2.topic 的 partition 只能增加不能减少
+
+
+
+not attempt to authenticate using SASL (unknown error)
+    # the maximum number of client connections.
+    # increase this if you need to handle more clients
+    maxClientCnxns=60
+
+zookeeper: WARN Unable to read additional data from client sessionid 0x1000012c92f00
+    https://blog.katastros.com/a?ID=00900-9f80d188-36a1-467f-8edf-736b26b415b2
+    https://www.cnblogs.com/zhangmingcheng/p/12073818.html
+    https://blog.csdn.net/w25193/article/details/80496804
+    https://blog.csdn.net/whp114870/article/details/124467682
+    客户端连接Zookeeper时，配置的超时时长过短。致使Zookeeper还没有读完Consumer的数据，连接就被Consumer断开了
+    初始化Zookeeper连接时，将接收超时参数值调整大一些即可（tickTime2000改为10000），默认是毫秒（ms）
+    vim server.properties
+        zookeeper.session.timeout.ms=400000
+
+java.lang.IllegalArgumentException: requirement failed: advertised.listeners cannot use the nonroutable meta-address 0.0.0.0. Use a routable IP address.
+    kafka 的 advertised listners 地址不能是 0.0.0.0
+
+
+efak 无法监控 kafka
+    https://github.com/smartloli/EFAK/issues/321
+    jmx 服务死活不生效，无法开放给远程 Kafka 2.1.0+cdh6.2.1

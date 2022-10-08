@@ -1,0 +1,69 @@
+batch.size      只有数据累计到 batch.size 之后, sender 才会发送数据,默认16k
+linger.ms       如果数据迟迟未达到 batch.size, sender 等待 linger.ms 设置的时间到了之后
+                就会发送数据. 单位 ms, 默认值是0ms, 表示没有延迟.
+                建议修改为 5-100ms.
+compression.type    压缩 snappy
+RecordAccumulator   缓冲区大小,修改为 64m
+
+ack
+    0           生产者发送过来的数据,不需要等待数据落盘应答, 生产环境没有使用 0 的情况.
+    1           生产者发送过来的数据,Leader 收到数据后应答.
+    -1(all)     生产者发送过来的数据, Leader 和 ISR 队列里面所有的节点收齐数据稍后应答. -1 和 all 等价.
+思考: 
+    -1 情况, Leader 收到了数据,所有的 Fllower 都开始同步数据,但有一个 Follower 因为某种
+    故障迟迟不能与 Leader 同步?
+    Leader 维护了一个动态的 in-sync replica set(IRS), 意味着和 Leader 保持同步的 
+    Follower + Leader 集合(leader:0, isr:0,1,2).
+    如果 Follower 长时间未向 Leader 发送通信请求或同步数据, 则该 Follower 将被踢出 ISR.
+    该时间阀值由 replica.lag.time.max.ms 参数设定, 默认 30s
+    这样就不用等长期不上或者已经故障的节点了
+数据可靠性分析:
+    如果分区副本设置为1个, 或者 ISR 里应答的最小副本数量(min.insync.replicas 默认为1)设置为1
+    和 ack=1的效果是一样的,仍然由丢数据的风险(leader: 0, isr:0)
+数据可靠性条件= ACK级别设置为-1 + 分区副本大于等于2 + ISR里应答的最小副本数量大于2
+可靠性分析:
+    acks=0      生产者发送过来的数据就不管了,可靠性差,效率高
+    acks=1      生产者发送过来的数据 Leader 应答,可靠性中等,效率中等
+    acks=-1     生产者发送过来的数据 Leader 和 ISR 队列里面所有的 Follower 应答, 可靠性高, 效率低
+    在生产环境中, acks=0 很好使用, acks=1 一般用于传输普通日志,允许丢失个别数据, 
+    acks=-1 一般用于传输和钱相关的数据,对可靠性要求比较高的场景.
+    
+        
+kafka 分区的好处
+    1.便于合理使用存储资源, 每个 partition 在一个 Broker 上存储,可以把海量的数据按照分区
+      切割成一块一块数据存储在多台 Broker 上,合理控制分区的任务,可以实现负载均衡的效果.
+    2.提高并行度,生产者可以以分区为单位发送数据;消费者可以以分区为单位进行消费数据
+
+
+数据传输语义
+    至少一次(At Least Once) = ACK级别设置为-1 + 分区副本数大于等于2 + ISR里应答的最小副本数大于等于2
+    最多一次(At Most Once) = ACK 级别设置为0
+    精确一次(Exactly Once) = 对于一些非常重要的信息,比如和钱相关的数据,要求数据既不能重复也不丢失
+    总结:
+        At Least Once 可以保证数据不丢失,但是不能保证数据不重复
+        At Most Once 可以保证数据不重复,但是不能保证数据不丢失
+    (kafka 0.11 版本以后,引入了一项重大特性: 幂等性和事务)
+
+幂等性原理
+    - 幂等性就是指 Porductor 不论向 Broker 发送多少次重复数据, Broker 都只会持久化一条,保证了不重复.
+      精确一次(Exactly Once) = 幂等性 + 至少一次(ack=-1 + 分区副本数>=2 + ISR 最小副本数量 >=2)
+    - 重复数据的判断标准: 具有 <PID, Partition, SeqNumber>, 相同主键的消息提交时, Broker 只会持久化一条
+      其中 PID 是 Kafka 每次重启都会分配一个新的. Partition 表示分区号; Sequence Number 是单调递增的
+      所以幂等性只能保证的是在单分区单会话内不重复
+      (kafka 重启一次就是一个新的会话)
+    - enable.idempotence 默认为 true, false 关闭
+
+kafka 事务原理
+    producer 在使用事务功能前,必须先自定义一个唯一的 transaction.id, 有了 transaction.id,
+    即使客户端挂掉了,它重启之后也能继续处理未完成的事务.
+
+生产经验: 数据乱序
+    1.kafka 在 1.x 版本之前保证数据分区有序,条件如下:
+        max.in.flight.requests.per.connection=1 (不需要考虑是否开启幂等性)
+    2.kafka 在 1.x 及以后保证数据分区有序, 条件如下
+        1.未开启幂等性
+            max.in.flight.requests.per.connection 需要设置为1
+        2.开启幂等性
+            max.in.flight.requests.per.connection 需要设置小于等于5.
+            原因说明: 因为 kafka 1.x 以后, 启用幂等后, kafka 服务端会缓存 producer 发来的
+            最近5个 request 的元数据,故无论如何,都可以保证最近5个 request 的数据都是有序的.

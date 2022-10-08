@@ -1,0 +1,37 @@
+version: "3"
+services:
+  zookeeper2:
+    image: 'bitnami/zookeeper:3.7.1'
+    ports:
+      - '2181:2181'
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: true
+      ZOO_LISTEN_ALLIPS_ENABLED: true
+      ZOO_MAX_CNXNS: 1000
+      ZOO_SERVER_ID: 2
+      #ZOO_SERVERS: 10.250.21.11:2888:3888,10.250.21.12:2888:3888,10.250.21.13:2888:3888
+      #ZOO_SERVERS: server.1=10.250.21.11:2888:3888,sever.2=10.250.21.12:2888:3888,server.3=10.250.21.13:2888:3888
+    volumes:
+      - ./zookeeper:/bitnami/zookeeper
+    restart: always
+  kafka2:
+    image: 'bitnami/kafka:2.8.1'
+    container_name: kafka2
+    ports:
+      - '9092:9092'
+      - '9999:9999'
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_CFG_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://10.250.21.12:9092
+      #KAFKA_CFG_ZOOKEEPER_CONNECT: 10.250.21.11:2181,10.250.21.12:2181,10.250.21.13:2181/kafka
+      KAFKA_CFG_ZOOKEEPER_CONNECT: 10.250.21.11:2181/kafka
+      ALLOW_PLAINTEXT_LISTENER: yes
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: false
+      KAFKA_CFG_LOG_RETENTION_HOURS: 168
+      JMX_PORT: 9999
+    volumes:
+    - ./kafka:/bitnami/kafka
+    depends_on:
+      - zookeeper2
+    restart: always

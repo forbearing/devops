@@ -1,0 +1,2 @@
+mkdir: cannot create directory '/bitnami/kafka/config': Permission denied
+    chown 1001:1001 ./kafka ./zookeeper

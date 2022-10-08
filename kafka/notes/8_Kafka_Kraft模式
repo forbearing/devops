@@ -1,0 +1,27 @@
+Kafka-kraft 架构
+    - kraft 架构不再依赖于 zookeeper 集群,而是用3台 controller 节点代替 zookeeper.
+      元数据保存在 controller 中, 由 controller 直接进行 kafka 集群管理.
+    - 这样做的好处有:
+      1.kafka 不再依赖外部框架,独立运行
+      2.controller 管理集群时,不再需要从 zookeeper 读取数据,集群性能提升
+      3.由于不再依赖 zookeeper, 集群扩展时不再受 zookeeper 读写能力限制
+      4.controller 不再动态选举, 而是由配置文件规定. 这样我们可以针对性的加强 controller
+        节点的配置,而不是像以前一样对随机 controller 节点的高负载束手无策
+
+修改配置
+    vi /usr/local/kafka/config/kraft/server.properties
+        node.id=1
+        controller.quorum.voters=1@kafka01:9093,2@kafka02:9093,3@kafka03:9093
+        listeners=PLAINTEXT://:9092,CONTROLLER://:9093
+        advertised.listeners=PLAINTEXT://:9092
+        log.dirs=/usr/local/kafka/kraft-combined-data
+
+
+初始化集群数据目录
+    1.首先生成存储目录唯一 ID
+        kafka-storage.sh random-uuid
+    2:用该 ID 格式化 kafka 存储目录
+        kafka-storage.sh format -t DckstMPMQuehttZ9MSXc2A -c /usr/local/kafka/config/kraft/server.properties
+        # 在所有的 kafka 节点执行
+        # 注意是 kafka/config/kraft/server.properties 而不是 kafka/server.properties
+

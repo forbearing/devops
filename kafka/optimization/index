@@ -1,0 +1,60 @@
+Kafka 生产者
+    分区策略
+    自定义分区
+    提高生产者吞吐量
+    数据可靠
+    数据重复
+    数据有序
+    数据乱序
+
+Kafka Broker
+    ZK 存储
+    上下线
+    服役新节点
+    退役旧节点
+    副本基本信息
+    Leader 选举
+    Flowers 故障
+    Leader 故障
+    分区副本分配
+    手动调整分区副本分配
+    Leader Partition 负载均衡
+    增加副本因子
+    文件存储机制
+    文件清除策略
+    高效读写
+
+Kafka 消费者
+    消费方式
+    消费者总体工作流程
+    消费者组工作原理
+    消费组初始化
+    消费组详细消费流程
+    消费一个主题
+    消费一个分区
+    消费组案例
+    Range 分配
+    Roundrobin
+    Sticky
+    offset 保存位置
+    自动 offset
+    手动 offset
+    指定 offset
+    按照时间消费
+    消费者事务
+    数据积压
+
+Kafka 监控
+    eagle 安装
+    eagle 监控页面
+    kraft 模式
+
+
+Kafka 调优
+    硬件选择
+    生产者调优
+    Broker 调优
+    消费者调优
+    总体调优
+    生产者压力测试
+    消费者压力测试

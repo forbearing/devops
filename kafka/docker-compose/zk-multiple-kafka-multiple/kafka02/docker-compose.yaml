@@ -1,0 +1,82 @@
+version: "3"
+services:
+  zookeeper:
+    image: 'bitnami/zookeeper:3.7.1'
+    ports:
+      - '2181:2181'
+      - '2888:2888'
+      - '3888:3888'
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: true
+      #ZOO_LISTEN_ALLIPS_ENABLED: true
+      ZOO_SERVER_ID: 2
+      # 只有当 ZOO_SERVER_ID 不连续的时候才必须指定 ZOO_SERVER_ID, 且当前节点必须监听在 0.0.0.0
+      #ZOO_SERVERS: 10.250.21.11:2888:3888::1,10.250.21.12:2888:3888::2,10.250.21.13:2888:3888::3
+      #ZOO_SERVERS: server.1=10.250.21.11:2888:3888 server.2=10.250.21.12:2888:3888 server.3=10.250.21.13:2888:3888
+      ZOO_SERVERS: 10.250.21.11:2888:3888,0.0.0.0:2888:3888,10.250.21.13:2888:3888
+      ZOO_PORT_NUMBER: 2181
+      ZOO_TICK_TIME: 2000
+      ZOO_INIT_LIMIT: 10
+      ZOO_SYNC_LIMIT: 5
+      ZOO_MAX_CNXNS: 1000
+      ZOO_MAX_CLIENT_CNXNS: 120
+      ZOO_MAX_SESSION_TIMEOUT: 40000
+      ZOO_HEAP_SIZE: 2048
+      ZOO_ENABLE_PROMETHEUS_METRICS: false
+      ZOO_PROMETHEUS_METRICS_PORT_NUMBER: 7000
+      ZOO_ENABLE_ADMIN_SERVER: true
+      ZOO_ADMIN_SERVER_PORT_NUMBER: 8080
+
+      #ALLOW_ANONYMOUS_LOGIN: false
+      #ZOO_ENABLE_AUTH: true
+      #ZOO_SERVER_USERS: zoo
+      #ZOO_SERVER_PASSWORDS: zoo
+      ##ZOO_CLIENT_USER: zoo
+      ##ZOO_CLIENT_PASSWORD: zoo
+    volumes:
+      - ./zookeeper:/bitnami/zookeeper
+    restart: always
+    container_name: zookeeper
+  kafka:
+    image: 'bitnami/kafka:2.8.1'
+    ports:
+      - '9092:9092'
+      - '9093:9093'
+      - '9999:9999'
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_CFG_ZOOKEEPER_CONNECT: 10.250.21.11:2181,10.250.21.12:2181,10.250.21.13:2181/kafka
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: false
+      KAFKA_CFG_LOG_RETENTION_HOURS: 168
+      KAFKA_CFG_MAX_PARTITION_FETCH_BYTES: 1048576
+      KAFKA_CFG_MAX_REQUEST_SIZE: 1048576
+      KAFKA_HEAP_OPTS: -Xmx4096m -Xms4096m
+      KAFKA_ENABLE_KRAFT: no
+      JMX_PORT: 9999
+      BITNAMI_DEBUG: true
+
+      ALLOW_PLAINTEXT_LISTENER: true
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://10.250.21.12:9092
+
+      ## INTERNAL: used for inter-broker communications.
+      ## CLIENT: used for communications with clients that are within the same network as Apache Kafka brokers.
+      #ALLOW_PLAINTEXT_LISTENER: false
+      #KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:SASL,CLIENT:SASL
+      #KAFKA_CFG_LISTENERS: INTERNAL://:9093,CLIENT://:9092
+      #KAFKA_CFG_ADVERTISED_LISTENERS: INTERNAL://10.250.21.12:9093,CLIENT://10.250.21.12:9092
+      #KAFKA_CFG_INTER_BROKER_LISTENER_NAME: INTERNAL
+      #KAFKA_TLS_TYPE: JKS
+      #KAFKA_CLIENT_USERS: kafka
+      #KAFKA_CLIENT_PASSWORDS: kafka
+      #KAFKA_INTER_BROKER_USER: kafka
+      #KAFKA_INTER_BROKER_PASSWORD: kafka
+      #KAFKA_ZOOKEEPER_PROTOCOL: SASL
+      #KAFKA_ZOOKEEPER_USER: zoo
+      #KAFKA_ZOOKEEPER_PASSWORD: zoo
+    volumes:
+    - ./kafka:/bitnami/kafka
+    depends_on:
+      - zookeeper
+    restart: always
+    container_name: kafka

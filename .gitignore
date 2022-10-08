@@ -1,0 +1,8 @@
+*.bak
+*.rpm
+*.deb
+*-bin
+*.bin
+*.gz
+*.tgz
+*.dmg

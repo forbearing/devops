@@ -1,0 +1,12 @@
+kafka-server-start.sh               # 启动服务
+kafka-server-stop.sh                # 关闭服务
+
+kafka-console-consumer.sh           # 控制台上的消费者，多在测试环境中使用
+kafka-console-producer.sh           # 控制台上的生产者，多在测试环境中使用
+kafka-topics.sh                     # 关于 topics 的增删改查
+
+kafka-producer-perf-test.sh         # 生产者压力测试
+kafka-consumer-perf-test.sh         # 消费者压力测试
+
+/usr/local/kafka/bin/kafka-server-start.sh -daemon /usr/local/kafka/config/server.properties                    # 启动 zookeeper
+/usr/local/kafka/bin/zookeeper-server-start.sh -daemon /usr/local/kafka/config/zookeeper.properties             # 启动 Kafka

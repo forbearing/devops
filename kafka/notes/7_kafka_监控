@@ -1,0 +1,33 @@
+1:下载
+    https://www.kafka-eagle.org
+    wget -c https://codeload.github.com/smartloli/kafka-eagle-bin/tar.gz/refs/tags/v3.0.1 -O kafka-eagle-bin-v3.0.1.tar.gz
+
+2:修改 kafka 启动脚本
+    # kafka 默认启动和运行内存都是 1G, 如果要做监控是不够的
+
+3:安装 mysql
+    rpm -Uvh http://dev.mysql.com/get/mysql-community-release-el7-5.noarch.rpm
+    yum repolist enabled | grep mysql
+    yum install -y mysql-community-server
+    systemctl enable --now mysqld
+    mysql> use mysql;
+    mysql> update user set password=password('toor') where user='root' and host='localhost';
+    mysql> grant all privileges on *.* to root@'%' identified by 'toor';
+    mysql> flush privileges;
+    mysql> create database efak default character set utf8 collate utf8_bin;
+
+4:安装 efak
+5:配置
+    vi efak/conf/system-config.properties
+        efak.zk.cluster.alias=cluster1
+        cluster1.zk.list=kafka01:2181,kafka02:2181,kafka03:2181/kafka
+        efak.driver=com.mysql.jdbc.Driver
+        efak.url=jdbc:mysql://127.0.0.1:3306/ke?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull
+        efak.username=root
+        efak.password=toor
+
+5.启动
+    firewall-cmd --add-port=8048/tcp --permanent
+    firewall-cmd --reload
+    efak 需要一个 KE_HOME 环境变量
+    ke.sh start

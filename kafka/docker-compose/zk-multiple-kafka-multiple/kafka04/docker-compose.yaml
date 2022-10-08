@@ -1,0 +1,42 @@
+version: "3"
+services:
+  kafka:
+    image: 'bitnami/kafka:2.8.1'
+    ports:
+      - '9092:9092'
+      - '9093:9093'
+      - '9999:9999'
+    environment:
+      KAFKA_BROKER_ID: 3
+      KAFKA_CFG_ZOOKEEPER_CONNECT: 10.250.21.11:2181,10.250.21.12:2181,10.250.21.13:2181/kafka
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: false
+      KAFKA_CFG_LOG_RETENTION_HOURS: 168
+      KAFKA_CFG_MAX_PARTITION_FETCH_BYTES: 1048576
+      KAFKA_CFG_MAX_REQUEST_SIZE: 1048576
+      KAFKA_HEAP_OPTS: -Xmx4096m -Xms4096m
+      KAFKA_ENABLE_KRAFT: no
+      JMX_PORT: 9999
+
+      ALLOW_PLAINTEXT_LISTENER: true
+      KAFKA_CFG_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://10.250.21.14:9092
+
+      ## INTERNAL: used for inter-broker communications.
+      ## CLIENT: used for communications with clients that are within the same network as Apache Kafka brokers.
+      #ALLOW_PLAINTEXT_LISTENER: false
+      #KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:SASL,CLIENT:SASL
+      #KAFKA_CFG_LISTENERS: INTERNAL://:9093,CLIENT://:9092
+      #KAFKA_CFG_ADVERTISED_LISTENERS: INTERNAL://10.250.21.14:9093,CLIENT://10.250.21.14:9092
+      #KAFKA_CFG_INTER_BROKER_LISTENER_NAME: INTERNAL
+      #KAFKA_TLS_TYPE: JKS
+      #KAFKA_CLIENT_USERS: kafka
+      #KAFKA_CLIENT_PASSWORDS: kafka
+      #KAFKA_INTER_BROKER_USER: kafka
+      #KAFKA_INTER_BROKER_PASSWORD: kafka
+      #KAFKA_ZOOKEEPER_PROTOCOL: SASL
+      #KAFKA_ZOOKEEPER_USER: zoo
+      #KAFKA_ZOOKEEPER_PASSWORD: zoo
+    volumes:
+    - ./kafka:/bitnami/kafka
+    restart: always
+    container_name: kafka

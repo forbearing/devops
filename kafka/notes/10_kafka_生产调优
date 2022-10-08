@@ -1,0 +1,228 @@
+===== index
+1.Kafka 硬件选择
+    1.服务器台数选择
+    2.磁盘选择
+    3.内存选择
+    4.CPU 选择
+    5.网络选择
+
+2.Kafka 生产者
+    1.kafka 生产者核心参数配置
+    2.生产者如何提高吞吐量
+    3.数据可靠性
+    4.数据去重
+    5.数据有序
+    6.数据乱序
+
+3.Kafka Broker
+    1.Broker 核心参数配置
+    2.服役新节点/退役新节点
+    3.增加分区
+    4.增加副本因子
+    5.手动调整分区副本存储
+    6.Leader Partition 负载平衡
+    7.自动创建主题
+
+4.Kafka 消费者
+    1.Kafka 消费者核心参数配置
+    2.消费者再平衡
+    3.消费者事务
+    4.消费者如何提高吞吐量
+
+5.Kafka 总体
+    1.如何提高吞吐量
+    2.数据精确一次
+    3.合理设置分区数
+    4.单条日志大于1m
+    5.服务器挂了
+    6.集群压力测试
+
+
+===== 1.Kafka 硬件选择
+4.CPU 选择
+    num.io.threads = 8          负责写磁盘的线程数,整个参数值要占总核数的 50%
+    num.replica.fetchers = 1    副本拉取线程数,这个参数要占总核数的 50% 的 1/3
+    num.network.threads = 3     数据传输线程数,这个参数占总核数的 50% 的 2/3
+    建议 32 个 cpu core
+5:网络带宽
+    网络带宽 = 峰值吞吐量 ~~ 20M/s 选择千兆网卡即可.
+
+
+===== 2.Kafka 生产者
+    read-only       Requires a broker restart for update.
+    per-broker      May be updated dynamically for each broker.
+    cluster-wide    May be updated dynamically as a cluster-wide default.
+
+    1.kafka 生产者核心参数配置
+        bootstrap.servers
+            生产者连接集群所需的 broker 地址清单, 例如 kafka01:9092,kafka02:9092,kafka03:9092
+            可以设置一个或多个,中间逗号分开. 注意这里并非需要所有的 broker 地址,因为生产者
+            从给定的 broker 里查找到其他 broker 信息.
+        key.serializer 或 value.serializer
+            指定发送消息的 key 核 value 的序列化类型. 一定要全类名
+        buffer.memory
+            RecordAccumulator 缓冲区总大小,默认 32M
+        batch.size
+            缓冲区一批数据大小值, 默认 16k, 适当增加该值,可以提高吞吐量,但是如果该值设置
+            太大,会导致数据传输延迟增加
+        linger.ms
+            如果数据迟迟未达到 batch.size, sender 等待 linger.time 之后就会发送数据.
+            单位是 ms, 默认值为 0ms, 表示没有延迟. 生产环境建议该值为 5-100ms 之间.
+        acks
+            0   生产者发送来的数据,不需要数据落盘应答
+            1   生产者发送来的数据, Leader 收到数据后应答
+            -1  生产者发送过来的数据, Leader 核 isr 队列里面所有的节点收齐数据后应答
+                默认值是-1, -1 和 all 是等价的.
+        max.in.flight.requests.per.connection
+            允许最多返回 ack 的次数, 默认为 5, 开启幂等性要保证该值是1-5的数字
+        retries
+            当消息发送出现错误时候,系统会重发消息. retries 表示重试次数. 默认是 int 最大值 2147483647
+            如果设置了重试, 还想保证消息的有序性,需要设置 MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION=1
+            否则在重试此失败消息的时候, 其他的消息可能发送成功了.
+        retry.backoff.ms
+            两次重试之间的时间间隔, 默认是 100ms
+        enable.idempotence
+            是否开启幂等性, 默认 true, 开启幂等性
+        compression.type
+            生产者发送的所有数据的压缩方式. 默认是 none, 也就是不压缩
+            支持的压缩类型: none, gzip, snappy, lz4 和 zstd.
+        
+    2.生产者如何提高吞吐量
+        buffer.memory
+        batch.size
+        linger.ms
+        compression.type
+
+    3.数据可靠性
+        acks
+        至少一次(At Least Once) = ACK 级别设置为-1 + 分区副本大于等于2 + ISR 里应答的最小副本数量大于等于2
+
+    4.数据去重
+        enable.idempotence
+
+    5.数据有序
+        单分区内: 有序(有条件的,不能乱序)
+        多分区: 分区与分区无序.
+
+    6.数据乱序
+        enable.idempotence
+        max.in.flight.requests.per.connection
+
+
+===== 3.Kafka Broker
+1.Broker 核心参数配置
+    replica.lag.time.max.ms
+        ISR 中,如果 Follower 长时间未向 Leader 发送通信请求或同步数据,则该 Follower 将被
+        踢出 ISR. 该时间阀值默认30s
+    auto.leader.rebalance.enable
+        默认是 true, 自动 Leader Partition 平衡, 建议关闭.
+        生产环境中, leader 重选举的代价比较大,可能会带来性能影响, 建议设置为 false 关闭
+    leader.imbalance.per.broker.percentage
+        默认是 10%, 每个 broker 允许的不平衡的 leader 的比率. 如果每个 broker 超过了这个值
+        控制器触发平衡.
+    leader.imbalance.check.interval.seconds
+        默认值 300s. 检查 leader 负载是否平衡的间隔时间
+    log.segment.bytes
+        kafka 中 log 日志是分成一块块存储的,此配置是指 log 日志划分成块的大小,默认值 1G
+    log.index.interval.bytes
+        默认 4kb, kafka 里面每当写入了4kb 大小的日志(.log), 然后就往 index 文件中记录一个索引
+    log.retention.hours
+        kafka 中数据保存的时间, 默认7天
+    log.retention.minutes
+        kafka 中数据保存的时间, 分钟级别, 默认关闭
+    log.retention.ms
+        kafka 中数据保存的时间, 毫秒级别, 默认关闭
+    log.retention.check.interval.ms
+        检查数据是否保存超时的间隔, 默认5分钟
+    log.retention.bytes
+        默认等于-1,表示无穷大. 超过设置的所有日志总大小,删除最早的 segment
+    log.cleanup.policy
+        默认是 delete, 表示所有数据启用删除策略;如果设置值为 compact, 表示所有数据启用压缩策略.
+    num.io.threads
+        默认是 8. 负责写磁盘的线程数. 整个参数要占总核数的 50%
+    num.replica.fetchers
+        默认是 1. 副本拉取线程数, 这个参数要占核数的50%的1/3
+    num.network.threads
+        默认是 3. 数据传输线程数, 这个参数占总核数的 50% 的 2/3
+    log.flush.interval.messages
+        强制页缓存刷写到磁盘的条数,默认是 long 的最大值. 9223372036854775807, 一般不建议修改
+        交给系统自己管理
+    log.flush.interval.ms
+        每隔多久, 刷数据到磁盘,默认是 null, 一般不建议修改,交给系统自己管理
+
+2.服役新节点/退役新节点
+    1.创建一个要均衡的主题
+        vim topics-to-move.json
+    2.生成一个负载均衡的计划
+        kafka-reassign-partitions.sh \
+            --bootstrap-server kafka01:9092 \
+            --topic-to-move-json-file topics-to-move.json
+            --broker-list "0,1,2,3" \
+            --generate
+    3.创建副本存储计划(所有的副本存储在 broker0, broker1, borker2, borker3 中)
+        vim increase-replication-factor.json
+    4.执行副本存储计划
+        kafka-reassign-partitions.sh \
+            --bootstrap-server kafka01:9092 \
+            --reassignment-json-file increase-replication-factor.json \
+            --execute
+    5.验证副本存储计划
+        kafka-reassign-partitions.sh \
+            --bootstrap-server kafka01:9092 \
+            --reassignment-json-file increase-replication-factor.json \
+            --verify
+
+3.增加分区
+    kafka-topics.sh --bootstrap-server kafka01:9090 --topic firstt --alter --partitions 3
+
+4.增加副本因子
+    1.创建 topic
+        kafka-topics.sh --bootstrap-server kafka01:9092 --topic second \
+            --create --partitions 3 --replication-factor 1
+    2.创建副本存储计划(手动增加副本存储)
+        vim increase-replication-factor.json
+    3.执行副本存储计划
+        kafka-reassign-partitions.sh \
+            --bootstrap-server kafka01:9092 \
+            --reassignment-json-file increase-replication-factor.json \
+            --execute
+    4.验证副本存储计划
+        kafka-reassign-partitions.sh \
+            --bootstrap-server kafka01:9092 \
+            --reassignment-json-file increase-replication-factor.json \
+            --verify
+        kafka-topics.sh --bootstrap-server kafka01:9092 \
+            --topic second --description
+
+5.手动调整分区副本存储
+    1.创建副本存储计划, 所有副本都指定存储在 broker0, broker1 中
+        vim increase-replication-factor.json
+    2.执行副本存储计划
+        kafka-reassign-partitions.sh \
+            --bootstrap-server kafka01:9092 \
+            --reassignment-json-file increase-replication-factor.json \
+            --execute
+    3.验证副本存储计划
+        kafka-reassign-partitions.sh \
+            --bootstrap-server kafka01:9092 \
+            --reassignment-json-file increase-replication-factor.json \
+            --verify
+
+6.Leader Partition 负载平衡
+    auto.leader.rebalance.enable
+    leader.imbalance.per.broker.percentage
+    leader.imbalance.check.interval.seconds
+
+7.自动创建主题
+    如果 broker 端配置 auto.create.topics.enable 设置为 true(默认为 true), 那么当生产者向一个
+    未创建的主题发送消息时,会自动创建一个分区数为 num.partitions(默认值为1), 副本因子为 
+    default.replication.factor(默认值为1)的主题. 除此之外,当一个消费者开始从未知主题中读取
+    消息时,或者当任意一个客户端向未知主题发送元数据请求时,都会自动创建一个相应主题.这种创建
+    主题的方式是非预期的,增加了主题管理和维护的难度. 
+    生产环境建立将该参数设置为 false
+
+===== 4.Kafka 消费者
+    1.Kafka 消费者核心参数配置
+    2.消费者再平衡
+    3.消费者事务
+    4.消费者如何提高吞吐量

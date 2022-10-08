@@ -1,0 +1,34 @@
+===== 服役新节点
+
+NOTE:
+    以前的 topic 还是存在老的 kafka 节点上,新的 topic 才会放在新的 kafka 节点上
+    所以需要手动 reassign
+
+1.拷贝 kafka 目录
+2.删除 datas 和 logs 目录
+3.修改 server.properties 配置文件
+    broker.id=3
+
+1.创建一个要均衡的主题
+    vi topics-to-move.json
+2.生成一个要均衡的计划
+    kafka-reassign-partitions.sh --bootstrap-server kafka01:9092 --topics-to-move-json-file topics-to-move.json --broker-list "0,1,2,3" --generate
+3.创建副本计划(所有副本依次存放在 broker0, broker1, broker2, broker3)
+    vi increase-replication-factor.json
+4.执行副本计划
+    kafka-reassign-partitions.sh --bootstrap-server kafka01:9092 --reassignment-json-file increase-replication-factor.json  --execute
+5:验证副本计划
+    kafka-reassign-partitions.sh --bootstrap-server kafka01:9092 --reassignment-json-file increase-replication-factor.json  --execute
+    kafka-topics.sh --bootstrap-server kafka01:9092 --topic first --describe
+
+
+
+
+===== 退役新节点
+    1.创建执行计划
+        kafka-reassign-partitions.sh --bootstrap-server kafka01:9092 --topics-to-move-json-file topics-to-move.json --broker-list "0,1,2" --generate
+    2:执行副本存储计划
+        kafka-reassign-partitions.sh --bootstrap-server kafka01:9092 --reassignment-json-file increase-replication-factor.json --execute
+    3:验证副本存储计划
+        kafka-reassign-partitions.sh --bootstrap-server kafka01:9092 --reassignment-json-file increase-replication-factor.json --verify
+        kafka-topics.sh --bootstrap-server kafka01:9092 --topic first --describe

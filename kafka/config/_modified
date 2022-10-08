@@ -1,0 +1,6 @@
+server.properties
+    # broker.id 不同节点一定不能相同
+    broker.id=0
+    listeners=PLAINTEXT://kafka02:9092
+    log.dirs=/opt/module/kafka/datas
+    zookeeper.connect=10.250.21.11:2181,10.250.21.12:2181,10.250.21.13.2181/kafka

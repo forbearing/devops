@@ -1,0 +1,15 @@
+[Unit]
+Description=kafka
+After=network.target zookeeper.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/kafka/bin/kafka-server-start.sh /usr/local/kafka/config/kraft/server.properties
+ExecStop=/usr/local/kafka/bin/kafka-server-stop.sh
+Restart=on-failure
+StartLimitInterval=0
+StartLimitBurst=0
+SuccessExitStatus=143
+
+[Install]
+WantedBy=multi-user.target
