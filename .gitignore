@@ -6,3 +6,5 @@
 *.gz
 *.tgz
 *.dmg
+*.DS.Store
+*.swp
