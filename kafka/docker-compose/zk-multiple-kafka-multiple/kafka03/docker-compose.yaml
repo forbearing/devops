@@ -62,8 +62,8 @@ services:
       ALLOW_PLAINTEXT_LISTENER: true
       KAFKA_CFG_LISTENERS: PLAINTEXT://:9092
       KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://10.250.21.13:9092
-      KAFKA_CFG_SASL_ENABLED_MECHANISMS: PLAIN
-      KAFKA_CFG_SASL_MECHANISM_INTER_BROKER_PROTOCOL: PLAINTEXT
+      #KAFKA_CFG_SASL_ENABLED_MECHANISMS: PLAIN
+      #KAFKA_CFG_SASL_MECHANISM_INTER_BROKER_PROTOCOL: PLAINTEXT
 
       ## INTERNAL: used for inter-broker communications.
       ## CLIENT: used for communications with clients that are within the same network as Apache Kafka brokers.
